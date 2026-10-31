@@ -122,9 +122,6 @@ export default function App() {
               <label>Original<audio controls src={state.original} /></label>
               <label>Cleaned<audio controls src={state.clean} /></label>
             </div>
-            <div className="actions">
-              <a className="button primary" href={state.clean} download={state.name}>Download WAV</a>
-            </div>
           </div>
         ) : (
           <>
