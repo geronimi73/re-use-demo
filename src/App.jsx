@@ -86,7 +86,7 @@ export default function App() {
       <header className="header">
         <h1 className="title">NVIDIA NemotronLabs RE-USE</h1>
         <div className="features">
-          <span>WebGPU demo</span>
+          <span>Unofficial WebGPU demo</span>
         </div>
         <div className="links">
           <a href="https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE">
