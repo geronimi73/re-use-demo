@@ -26,6 +26,10 @@ export default function App() {
 
   useEffect(() => { if (!hasGpu) track("No WebGPU"); }, [hasGpu]);
 
+  useEffect(() => {
+    if (state.phase === "working") window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [state.phase]);
+
   const getWorker = () => {
     if (!worker.current) worker.current = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
     return worker.current;
