@@ -4,6 +4,8 @@ Speech enhancement in the browser with [NVIDIA NemotronLabs RE-USE](https://hugg
 
 Live: [re-use-demo.geronimo-labs.com](https://re-use-demo.geronimo-labs.com)
 
+https://github.com/user-attachments/assets/c87fd415-0570-4b1b-bb19-b0ed6b591a3e
+
 Opus 5.5 wrote the WebGPU inference code. Process: 
  * Reproduce inference with original safetensors + plain torch
  * Convert to .onnx
