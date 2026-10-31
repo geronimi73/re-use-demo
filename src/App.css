@@ -226,3 +226,4 @@ a { color: var(--accent); }
   text-align: left;
   font: 0.7rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
 }
+.links .github { color: var(--text-h); }
