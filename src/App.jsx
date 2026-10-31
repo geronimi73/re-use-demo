@@ -112,7 +112,7 @@ export default function App() {
         ) : state.phase === "working" ? (
           <div className="panel">
             <p className="stage">
-              {STAGES[state.stage]}…
+              <span className="label"><span className="spinner" aria-hidden="true" />{STAGES[state.stage]}…</span>
               {state.speed != null && <span className="speed">{state.speed.toFixed(2)} s per audio second</span>}
             </p>
             <div className="bar"><div className="bar-fill" style={{ width: `${Math.round(state.p * 100)}%` }} /></div>
