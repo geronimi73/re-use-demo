@@ -1,6 +1,7 @@
 // Waveform in, enhanced waveform out: STFT -> RE-USE on WebGPU -> iSTFT.
 
 import { stft, istft, stftParams } from "./dsp.js";
+import { largestBufferBytes } from "./model.js";
 
 // One pass over a waveform. Returns the enhanced waveform and time spent per stage (ms).
 export async function enhanceSegment(model, wav, sr) {
@@ -40,9 +41,27 @@ export async function enhanceSegment(model, wav, sr) {
   return { wav: result, t };
 }
 
+// Longest chunk (seconds, up to max) whose largest GPU buffer fits this device, or 0
+export function fitChunkSeconds(model, sr, max = 4) {
+  const { nFft, hop } = stftParams(sr);
+  const F = nFft / 2 + 1;
+  // Single pass covers up to 1.25 chunks, so that length has to fit too
+  const fits = (s) => largestBufferBytes(F, Math.floor((1.25 * s * sr) / hop) + 1) <= model.maxBufferBytes;
+  if (fits(max)) return max;
+  let lo = 0, hi = max;
+  for (let i = 0; i < 20; i++) { const mid = (lo + hi) / 2; if (fits(mid)) lo = mid; else hi = mid; }
+  return lo;
+}
+
 // Long files in chunks with a short linear crossfade between neighbours. GPU memory grows with
 // chunk length (about 280 MB per second at 44.1 kHz), so chunks keep it bounded.
 export async function enhance(model, wav, sr, { chunkSeconds = 4, overlapSeconds = 0.5, onProgress = null } = {}) {
+  // Shorter chunks on GPUs with a small buffer limit
+  chunkSeconds = Math.min(chunkSeconds, fitChunkSeconds(model, sr, chunkSeconds));
+  if (chunkSeconds < 1) {
+    throw new Error(`This device's GPU is too limited (largest buffer ${Math.round(model.maxBufferBytes / 2 ** 20)} MB)`);
+  }
+  overlapSeconds = Math.min(overlapSeconds, chunkSeconds / 4);
   const size = Math.floor(chunkSeconds * sr);
   if (wav.length <= size * 1.25) {
     const r = await enhanceSegment(model, wav, sr);

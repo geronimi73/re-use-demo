@@ -142,6 +142,24 @@ export function packWeights(w) {
 
 const U = GPUBufferUsage;
 
+// Sizes (floats) of the big tensors for one spectrogram, and which of the two arenas each lives in
+function tensorSizes(F, T) {
+  const Tp = T + 2, Fp = F + 2, Pf = Tp * Fp;
+  const Tl = Math.floor((Tp - 1) / 4) + 1, Fl = Math.floor((Fp - 3) / 2) + 1, P = Tl * Fl;
+  const P1 = Tl * 2 * Fl, P2 = 4 * Tl * 2 * Fl;
+  const sizes = {
+    x0: [1, Pf * 4], dfull: [0, Pf * 256], e3: [1, Pf * 64],    // encoder
+    xz: [0, P * 1024], y: [1, P * 512],                          // Mamba stack
+    ddec: [0, 2 * P * 256], x3dec: [1, 2 * P * 64], u1: [0, 2 * P1 * 64], u2: [1, 2 * P2 * 64],   // decoders
+  };
+  const arenaSize = [0, 0];
+  for (const [a, n] of Object.values(sizes)) arenaSize[a] = Math.max(arenaSize[a], n);
+  return { Tp, Fp, Pf, Tl, Fl, P, P1, P2, sizes, arenaSize };
+}
+
+// Bytes of the largest single buffer for one spectrogram
+export const largestBufferBytes = (F, T) => Math.max(...tensorSizes(F, T).arenaSize) * 4;
+
 export class ReuseGPU {
   // profile: record GPU time per kernel with timestamp queries (slower, for benchmarking)
   static async create(weightsBuffer, { profile = false } = {}) {
@@ -163,6 +181,8 @@ export class ReuseGPU {
   constructor(device, P, profile) {
     this.device = device;
     this.profile = profile;
+    // Largest buffer this GPU can bind
+    this.maxBufferBytes = Math.min(device.limits.maxBufferSize, device.limits.maxStorageBufferBindingSize);
     const sources = {
       gemm: K.gemmSource(), gemmInplace: K.gemmSource({ inplace: true }),
       inPartial: K.IN_PARTIAL, inFinal: K.IN_FINAL, inApply: K.IN_APPLY,
@@ -195,9 +215,11 @@ export class ReuseGPU {
     if (this.plan_ && this.plan_.F === F && this.plan_.T === T) return this.plan_;
     this.release();
     const dev = this.device;
-    const Tp = T + 2, Fp = F + 2, Pf = Tp * Fp;
-    const Tl = Math.floor((Tp - 1) / 4) + 1, Fl = Math.floor((Fp - 3) / 2) + 1, P = Tl * Fl;
-    const P1 = Tl * 2 * Fl, P2 = 4 * Tl * 2 * Fl;
+    const { Tp, Fp, Pf, Tl, Fl, P, P1, P2, sizes, arenaSize } = tensorSizes(F, T);
+    const need = Math.max(...arenaSize) * 4;
+    if (need > this.maxBufferBytes) {
+      throw new Error(`Audio chunk too large for this GPU (needs ${Math.round(need / 2 ** 20)} MB buffers, limit ${Math.round(this.maxBufferBytes / 2 ** 20)} MB)`);
+    }
     const owned = [];
     const buf = (floats) => {
       const b = dev.createBuffer({ size: Math.max(16, floats * 4), usage: U.STORAGE | U.COPY_SRC | U.COPY_DST });
@@ -207,13 +229,6 @@ export class ReuseGPU {
     // Big tensors live in two arena buffers. A tensor starts at offset 0 of its arena once the one
     // before it there is dead. Every dispatch that reads one big tensor and writes another uses one
     // from each arena (WebGPU tracks read/write conflicts per buffer, not per range).
-    const sizes = {
-      x0: [1, Pf * 4], dfull: [0, Pf * 256], e3: [1, Pf * 64],    // encoder
-      xz: [0, P * 1024], y: [1, P * 512],                          // Mamba stack
-      ddec: [0, 2 * P * 256], x3dec: [1, 2 * P * 64], u1: [0, 2 * P1 * 64], u2: [1, 2 * P2 * 64],   // decoders
-    };
-    const arenaSize = [0, 0];
-    for (const [a, n] of Object.values(sizes)) arenaSize[a] = Math.max(arenaSize[a], n);
     const arenas = arenaSize.map((n) => buf(n));
     const B = {
       mag: buf(F * T), pha: buf(F * T), magOut: buf(F * T), phaOut: buf(F * T),
@@ -346,6 +361,14 @@ export class ReuseGPU {
     return this.plan_;
   }
 
+  // Throw the first GPU error of the current run, if any
+  async checkErrors() {
+    const validation = await this.device.popErrorScope();
+    const memory = await this.device.popErrorScope();
+    if (memory) { this.release(); throw new Error("The GPU ran out of memory"); }
+    if (validation) { this.release(); throw new Error(`GPU error: ${validation.message}`); }
+  }
+
   // Free the GPU buffers of the current plan
   release() {
     if (!this.plan_) return;
@@ -380,8 +403,17 @@ export class ReuseGPU {
   // Returns { mag, pha } [F][T] and, when profiling, GPU milliseconds per kernel label.
   // stopAt ("enc", "blk0", "blk29") stops early so intermediates can be read for testing.
   async run(mag, pha, F, T, { stopAt = null } = {}) {
-    const plan = this.plan(F, T);
     const dev = this.device;
+    // Collect GPU errors, which WebGPU reports without throwing
+    dev.pushErrorScope("out-of-memory");
+    dev.pushErrorScope("validation");
+    let plan;
+    try {
+      plan = this.plan(F, T);
+    } catch (e) {
+      await dev.popErrorScope(); await dev.popErrorScope();
+      throw e;
+    }
     dev.queue.writeBuffer(plan.B.mag, 0, mag);
     dev.queue.writeBuffer(plan.B.pha, 0, pha);
     const enc = dev.createCommandEncoder();
@@ -409,11 +441,21 @@ export class ReuseGPU {
     }
     if (stopAt) {
       await dev.queue.onSubmittedWorkDone();
+      await this.checkErrors();
       return { timings };
     }
     await plan.read.mapAsync(GPUMapMode.READ);
     const out = new Float32Array(plan.read.getMappedRange().slice(0));
     plan.read.unmap();
+    await this.checkErrors();
+    // Output that is all zeros or not a number means the GPU work did not run
+    let finite = true, nonzero = false;
+    for (let i = 0; i < F * T; i++) {
+      const v = out[i];
+      if (!Number.isFinite(v)) { finite = false; break; }
+      if (v !== 0) nonzero = true;
+    }
+    if (!finite || !nonzero) throw new Error(`The GPU returned ${finite ? "empty" : "invalid"} output`);
     return { mag: out.subarray(0, F * T), pha: out.subarray(F * T), timings };
   }
 
