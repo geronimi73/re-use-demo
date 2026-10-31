@@ -84,7 +84,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1 className="title">NVIDIA NemotronLabs RE-USE</h1>
+        <h1 className="title">NVIDIA NemotronLabs <span className="nowrap">RE-USE</span></h1>
         <div className="features">
           <span>Unofficial WebGPU demo</span>
         </div>
@@ -146,7 +146,7 @@ export default function App() {
                   <path d="M12 16V4" /><path d="m7 9 5-5 5 5" /><path d="M4 20h16" />
                 </svg>
                 <p><strong>Drop an audio or video file</strong></p>
-                <p className="hint">or click to choose · WAV, MP3, M4A, MP4…</p>
+                <p className="hint">or choose a file · WAV, MP3, M4A, MP4…</p>
               </div>
               <input ref={input} type="file" accept="audio/*,video/*" hidden onChange={(e) => run(e.target.files[0])} />
             </div>

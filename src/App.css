@@ -146,10 +146,10 @@ a { color: var(--accent); }
   color: var(--text-h);
 }
 .examples ul { margin: 0; padding: 0; list-style: none; }
-.examples li { margin: 2px 0; display: flex; align-items: baseline; gap: 8px; }
+.examples li { margin: 0; display: flex; align-items: baseline; gap: 8px; }
 .ex-icon { width: 1.2em; text-align: center; font-size: 0.9rem; }
 .examples button {
-  padding: 0;
+  padding: 6px 0;
   background: none;
   border: none;
   color: var(--accent);
@@ -172,10 +172,10 @@ a { color: var(--accent); }
 }
 .close {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 8px;
+  right: 8px;
   display: flex;
-  padding: 6px;
+  padding: 11px;
   border: none;
   border-radius: 8px;
   background: none;
@@ -184,8 +184,8 @@ a { color: var(--accent); }
 }
 .close:hover { color: var(--text-h); background: var(--accent-bg); }
 .result-meta { padding-right: 32px; }
-.stage { margin: 0 0 12px; color: var(--text-h); display: flex; justify-content: space-between; gap: 12px; }
-.speed { color: var(--text); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.stage { margin: 0 0 12px; color: var(--text-h); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0 12px; }
+.speed { color: var(--text); font-size: 0.85rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bar {
   height: 8px;
   border-radius: 999px;
@@ -222,8 +222,13 @@ a { color: var(--accent); }
   margin: 0 auto 16px;
   max-width: 100%;
   width: fit-content;
-  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   text-align: left;
   font: 0.7rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 .links .github { color: var(--text-h); }
+.nowrap { white-space: nowrap; }
+@media (max-width: 400px) {
+  .title { font-size: 1.7rem; }
+}
