@@ -116,7 +116,7 @@ export default function App() {
             </button>
             <p className="result-meta">
               <span className="check" aria-hidden="true">✓</span>
-              Cleaned {state.duration.toFixed(1)} s of audio in {state.seconds.toFixed(1)} s
+              Cleaned {state.duration.toFixed(1)} seconds of audio in {state.seconds.toFixed(1)} seconds
             </p>
             <div className="players">
               <label>Original<audio controls src={state.original} /></label>
