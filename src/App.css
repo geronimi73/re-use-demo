@@ -1,10 +1,10 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
+  --text: #6b7280;
+  --text-h: #111111;
   --bg: #fff;
-  --border: #e5e4e7;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
+  --border: #e5e7eb;
+  --accent: #111111;
+  --accent-bg: rgba(17, 17, 17, 0.05);
   --error: #dc2626;
   --success: #059669;
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
@@ -23,8 +23,8 @@
     --text-h: #f3f4f6;
     --bg: #16171d;
     --border: #2e303a;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent: #f3f4f6;
+    --accent-bg: rgba(243, 244, 246, 0.08);
     --error: #f87171;
     --success: #34d399;
     color-scheme: dark;
