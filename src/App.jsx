@@ -40,10 +40,16 @@ export default function App() {
       setState({ phase: "working", stage: "decode", p: 0 });
       const { wav, duration } = await decodeToMono(file);
       if (duration < 0.1) throw new Error("This file has no audio.");
+      let cleanStart = 0;
       const result = await new Promise((resolve, reject) => {
         const w = getWorker();
         w.onmessage = ({ data }) => {
-          if (data.type === "progress") setState({ phase: "working", stage: data.stage, p: data.p });
+          if (data.type === "progress") {
+            if (data.stage === "clean" && !cleanStart) cleanStart = performance.now();
+            const done = data.stage === "clean" ? data.p * duration : 0;
+            const speed = done > 0 ? (performance.now() - cleanStart) / 1000 / done : null;
+            setState({ phase: "working", stage: data.stage, p: data.p, speed });
+          }
           else if (data.type === "done") resolve(data);
           else if (data.type === "error") reject(new Error(data.message));
         };
@@ -96,7 +102,10 @@ export default function App() {
           </div>
         ) : state.phase === "working" ? (
           <div className="panel">
-            <p className="stage">{STAGES[state.stage]}…</p>
+            <p className="stage">
+              {STAGES[state.stage]}…
+              {state.speed != null && <span className="speed">{state.speed.toFixed(2)} s per audio second</span>}
+            </p>
             <div className="bar"><div className="bar-fill" style={{ width: `${Math.round(state.p * 100)}%` }} /></div>
           </div>
         ) : state.phase === "done" ? (

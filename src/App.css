@@ -180,7 +180,8 @@ a { color: var(--accent); }
 }
 .close:hover { color: var(--text-h); background: var(--accent-bg); }
 .result-meta { padding-right: 32px; }
-.stage { margin: 0 0 12px; color: var(--text-h); }
+.stage { margin: 0 0 12px; color: var(--text-h); display: flex; justify-content: space-between; gap: 12px; }
+.speed { color: var(--text); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .bar {
   height: 8px;
   border-radius: 999px;
