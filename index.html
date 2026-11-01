@@ -4,8 +4,51 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
     <title>RE-USE speech enhancement demo · runs in your browser</title>
-    <meta name="description" content="Unofficial in-browser demo of NVIDIA NemotronLabs RE-USE, a speech enhancement model that removes noise, echo and bad-mic sound. Runs locally on WebGPU." />
+    <meta name="description" content="Unofficial in-browser demo of NVIDIA NemotronLabs RE-USE, a speech enhancement model that removes noise, echo and bad-mic sound. Runs locally on WebGPU, your audio never leaves your device." />
+    <meta name="keywords" content="speech enhancement, noise removal, denoise audio, remove echo, NVIDIA RE-USE, NemotronLabs, WebGPU, in-browser AI" />
+    <meta name="author" content="geronimo" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#16171d" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="https://re-use-demo.geronimo-labs.com/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="RE-USE WebGPU demo" />
+    <meta property="og:url" content="https://re-use-demo.geronimo-labs.com/" />
+    <meta property="og:title" content="NVIDIA NemotronLabs RE-USE · speech enhancement in your browser" />
+    <meta property="og:description" content="Remove noise, echo and bad-mic sound from any recording. Runs locally on WebGPU, no server, no upload." />
+    <meta property="og:image" content="https://re-use-demo.geronimo-labs.com/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="NVIDIA NemotronLabs RE-USE: a noisy waveform turning into clean speech" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NVIDIA NemotronLabs RE-USE · speech enhancement in your browser" />
+    <meta name="twitter:description" content="Remove noise, echo and bad-mic sound from any recording. Runs locally on WebGPU, no server, no upload." />
+    <meta name="twitter:image" content="https://re-use-demo.geronimo-labs.com/og.png" />
+    <meta name="twitter:image:alt" content="NVIDIA NemotronLabs RE-USE: a noisy waveform turning into clean speech" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "RE-USE WebGPU demo",
+        "url": "https://re-use-demo.geronimo-labs.com/",
+        "description": "Unofficial in-browser demo of NVIDIA NemotronLabs RE-USE speech enhancement. Removes noise, echo and bad-mic sound locally on WebGPU.",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any (requires WebGPU)",
+        "browserRequirements": "Requires WebGPU",
+        "image": "https://re-use-demo.geronimo-labs.com/og.png",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "sameAs": ["https://github.com/geronimi73/re-use-demo"]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

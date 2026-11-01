@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;box-sizing:border-box}
+body{width:1200px;height:630px;background:#fff;font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;color:#111;position:relative;overflow:hidden}
+.wrap{padding:72px 80px 0}
+.top{display:flex;align-items:center;gap:14px;font-size:26px;color:#6b7280;font-weight:500}
+.top img{width:44px;height:44px}
+h1{white-space:nowrap;font-size:76px;font-weight:750;letter-spacing:-2.5px;line-height:1;margin-top:34px}
+p{font-size:34px;color:#4b5563;margin-top:20px;letter-spacing:-.3px}
+svg{position:absolute;left:0;bottom:56px}
+.lab{position:absolute;bottom:22px;font-size:20px;font-weight:600;letter-spacing:2px;text-transform:uppercase}
+</style></head><body>
+<div class="wrap">
+<div class="top"><img src="../public/favicon.png">Unofficial WebGPU demo</div>
+<h1>NVIDIA NemotronLabs RE-USE</h1>
+<p>Remove noise, echo and bad-mic sound.<br>Runs locally in your browser.</p>
+</div>
+<svg id="w" width="1200" height="190"></svg>
+<div class="lab" style="left:80px;color:#9ca3af">Before</div>
+<div class="lab" style="right:80px;color:#111">After</div>
+<script>
+let s=7;const r=()=>(s=(s*16807)%2147483647)/2147483647;
+const W=1200,H=190,mid=H/2,step=6,ns="http://www.w3.org/2000/svg",svg=document.getElementById('w');
+function env(x){let e=0;for(const[c,w,a]of[[60,22,.5],[130,30,.9],[200,18,.6],[300,35,1],[370,20,.7],[470,30,.95],[540,22,.6],[640,32,.9],[700,18,.7],[790,28,1],[850,20,.6],[950,30,.9],[1010,18,.55],[1100,28,.85],[1160,16,.5]])e+=a*Math.exp(-(((x-c)/w)**2));return Math.min(e,1)}
+for(let x=4;x<W;x+=step){
+ const t=x/W, clean=env(x)*(.55+.45*r()), noise=.28+.22*r();
+ const k=Math.min(Math.max((t-.42)/.16,0),1); // blend from noisy to clean
+ let a=(1-k)*Math.min(clean*.9+noise,1)+k*clean; a=Math.max(a,.02);
+ const h=a*(H/2-6), l=document.createElementNS(ns,'line');
+ l.setAttribute('x1',x);l.setAttribute('x2',x);l.setAttribute('y1',mid-h);l.setAttribute('y2',mid+h);
+ l.setAttribute('stroke',k<.5?`rgb(${156-140*k*2|0},${163-146*k*2|0},${175-158*k*2|0})`:'#111');
+ l.setAttribute('stroke-width',3.4);l.setAttribute('stroke-linecap','round');svg.appendChild(l)}
+</script></body></html>
