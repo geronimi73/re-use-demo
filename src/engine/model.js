@@ -2,6 +2,7 @@
 // Input/output: compressed magnitude and phase spectrograms [F][T] (log1p magnitude, radians).
 
 import * as K from "./kernels.js";
+import { findAdapter, GPU_ERRORS, NEEDED_WORKGROUP_STORAGE } from "./gpu-check.js";
 
 // ---------------------------------------------------------------- weights
 
@@ -163,16 +164,15 @@ export const largestBufferBytes = (F, T) => Math.max(...tensorSizes(F, T).arenaS
 export class ReuseGPU {
   // profile: record GPU time per kernel with timestamp queries (slower, for benchmarking)
   static async create(weightsBuffer, { profile = false } = {}) {
-    if (!navigator.gpu) throw new Error("WebGPU is not available in this browser");
-    const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
-    if (!adapter) throw new Error("no WebGPU adapter");
+    const { adapter, reason } = await findAdapter();
+    if (!adapter) throw new Error(GPU_ERRORS[reason]);
     const features = profile && adapter.features.has("timestamp-query") ? ["timestamp-query"] : [];
     const device = await adapter.requestDevice({
       requiredFeatures: features,
       requiredLimits: {
         maxBufferSize: adapter.limits.maxBufferSize,
         maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize,
-        maxComputeWorkgroupStorageSize: 32768,
+        maxComputeWorkgroupStorageSize: NEEDED_WORKGROUP_STORAGE,
       },
     });
     return new ReuseGPU(device, packWeights(parseSafetensors(weightsBuffer)), features.length > 0);

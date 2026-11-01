@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { decodeToMono, wavBlob, SAMPLE_RATE } from "./audio.js";
 import MODEL_LICENSE from "./model-license.txt?raw";
 import { track, lengthBucket, speedBucket } from "./analytics.js";
+import { findAdapter, GPU_ERRORS } from "./engine/gpu-check.js";
 
 const EXAMPLES = [
   { file: "noisy-mic.wav", icon: "🎙️", label: "Noisy mic (official example)" },
@@ -19,12 +20,18 @@ export default function App() {
   const worker = useRef(null);
   const input = useRef(null);
   const urls = useRef([]);
-  const hasGpu = typeof navigator !== "undefined" && "gpu" in navigator;
+  const [gpuProblem, setGpuProblem] = useState(null);
 
   // Free object URLs when the page goes away
   useEffect(() => () => urls.current.forEach(URL.revokeObjectURL), []);
 
-  useEffect(() => { if (!hasGpu) track("No WebGPU"); }, [hasGpu]);
+  useEffect(() => {
+    findAdapter().then(({ reason }) => {
+      if (!reason) return;
+      setGpuProblem(reason);
+      track("No WebGPU", { reason });
+    });
+  }, []);
 
   useEffect(() => {
     if (state.phase === "working") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -105,10 +112,8 @@ export default function App() {
       </header>
 
       <main className="main">
-        {!hasGpu ? (
-          <div className="notice">
-            Your browser does not support WebGPU. Try a recent Chrome, Edge or Safari.
-          </div>
+        {gpuProblem ? (
+          <div className="notice">{GPU_ERRORS[gpuProblem]}</div>
         ) : state.phase === "working" ? (
           <div className="panel">
             <p className="stage">
